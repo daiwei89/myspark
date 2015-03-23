@@ -38,8 +38,8 @@ object LogisticRegression extends App {
 
   val defaultParams = Params()
 
-  val parser = new OptionParser[Params]("LinearRegression") {
-    head("LinearRegression: an example app for linear regression.")
+  val parser = new OptionParser[Params]("LogisticRegression") {
+    head("LogisticRegression: an example app for linear regression.")
     opt[Int]("numIterations")
       .text("number of iterations")
       .action((x, c) => c.copy(numIterations = x))
@@ -68,7 +68,7 @@ object LogisticRegression extends App {
       """
         |For example, the following command runs this app on a synthetic dataset:
         |
-        |  bin/spark-submit --class org.apache.spark.examples.mllib.LinearRegression \
+        |  bin/spark-submit --class org.apache.spark.examples.mllib.LogisticRegression \
         |  examples/target/scala-*/spark-examples-*.jar \
         |  data/mllib/sample_linear_regression_data.txt
       """.stripMargin)
@@ -81,7 +81,7 @@ object LogisticRegression extends App {
   }
 
   def run(params: Params) {
-    val conf = new SparkConf().setAppName(s"LinearRegression with $params")
+    val conf = new SparkConf().setAppName(s"LogisticRegression with $params")
     val sc = new SparkContext(conf)
 
     Logger.getRootLogger.setLevel(Level.WARN)
