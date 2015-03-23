@@ -85,6 +85,7 @@ object LogisticRegression extends App {
     val sc = new SparkContext(conf)
 
     Logger.getRootLogger.setLevel(Level.WARN)
+    println(s"Experiment params: $params")
 
     val dataLoadingTimer = new Timer
     val training = params.dataFormat match {
@@ -95,7 +96,6 @@ object LogisticRegression extends App {
     println(s"Data loading time: $dataLoadingTime")
 
     println(s"numTrain: $numTrain")
-    println(s"Experiment params: $params")
     val updater = params.regType match {
       case NONE => new SimpleUpdater()
       case L1 => new L1Updater()
