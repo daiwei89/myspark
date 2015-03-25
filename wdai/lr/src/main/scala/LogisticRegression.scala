@@ -14,6 +14,7 @@ import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.mllib.linalg.SparseVector
 import scala.collection.mutable.ListBuffer
 import java.io._
+import scala.math.Ordering
 
 object LogisticRegression extends App {
   object RegType extends Enumeration {
@@ -25,6 +26,16 @@ object LogisticRegression extends App {
     type DataFormat = Value
     val LibSVM = Value
   }
+
+  /*
+  object PointOrdering extends Ordering[LabeledPoint] {
+    def compare(a:LabeledPoint, b:LabeledPoint) = {
+      val a1 = a.features.asInstanceOf[SparseVector].values(0)
+      val b1 = a.features.asInstanceOf[SparseVector].values(0)
+      a1 compare b1
+    }
+  }
+  */
 
   import RegType._
   import DataFormat._
@@ -111,8 +122,8 @@ object LogisticRegression extends App {
     }.cache()
     */
     val training1x = MLUtils.loadLibSVMFile(sc, params.input).cache()
-    val numPartitions1x = training1x.getNumPartitions()
-    println(s"numPartitions1x: $numPartitions1x")
+    //val numPartitions1x = training1x.getNumPartitions()
+    //println(s"numPartitions1x: $numPartitions1x")
 
     // Duplicate along users.
     val numDups = params.numDups
@@ -126,7 +137,9 @@ object LogisticRegression extends App {
       }
       listBuffer.toList
     }
-    val training = training1x.flatMap{p => dupData(p)}.cache()
+    //val training = training1x.flatMap{p => dupData(p)}.cache()
+    val training = training1x.flatMap{p =>
+    dupData(p)}.repartition(64*8).cache()
     training1x.unpersist()
 
     val numTrain1x = training1x.count()
