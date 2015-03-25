@@ -116,35 +116,28 @@ object LogisticRegression extends App {
     println(s"Experiment params: $params")
 
     val dataLoadingTimer = new Timer
-    /*
-    val training1x = params.dataFormat match {
-      case LibSVM => MLUtils.loadLibSVMFile(sc, params.input).cache()
-    }.cache()
-    */
-    val training1x = MLUtils.loadLibSVMFile(sc, params.input).cache()
-    //val numPartitions1x = training1x.getNumPartitions()
-    //println(s"numPartitions1x: $numPartitions1x")
-
-    // Duplicate along users.
-    val numDups = params.numDups
-    def dupData(p: LabeledPoint) : List[LabeledPoint] = {
-      val listBuffer = new ListBuffer[LabeledPoint]
-      val dim = p.features.size
-      val sparseVec = p.features.asInstanceOf[SparseVector]
-      for (i <- 0 to (numDups - 1)) {
-        listBuffer += new LabeledPoint(p.label, Vectors.sparse(dim,
-          sparseVec.indices, sparseVec.values))
+    val training = if (params.numDups == 1) {
+      MLUtils.loadLibSVMFile(sc, params.input).cache()
+    } else {
+      val training1x = MLUtils.loadLibSVMFile(sc, params.input).cache()
+      val numDups = params.numDups
+      def dupData(p: LabeledPoint) : List[LabeledPoint] = {
+        val listBuffer = new ListBuffer[LabeledPoint]
+        val dim = p.features.size
+        val sparseVec = p.features.asInstanceOf[SparseVector]
+        for (i <- 0 to (numDups - 1)) {
+          listBuffer += new LabeledPoint(p.label, Vectors.sparse(dim,
+            sparseVec.indices, sparseVec.values))
+        }
+        listBuffer.toList
       }
-      listBuffer.toList
+      val trainingToReturn = training1x.flatMap{p => dupData(p)}.cache()
+      val numTrain1x = training1x.count()
+      println(s"Duplicate $numTrain1x data by factor: $numDups")
+      training1x.unpersist()
+      trainingToReturn
     }
-    //val training = training1x.flatMap{p => dupData(p)}.cache()
-    val training = training1x.flatMap{p =>
-    dupData(p)}.repartition(64*8).cache()
-    training1x.unpersist()
-
-    val numTrain1x = training1x.count()
     val numTrain = training.count()
-    println(s"Duplicate $numTrain1x data to $numTrain. Dup factor: $numDups")
     val dataLoadingTime = dataLoadingTimer.elapsed
     println(s"Data loading time: $dataLoadingTime")
 
